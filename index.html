@@ -25,33 +25,21 @@
     .header {
         background: var(--accent);
         color: white;
-        padding: 20px 30px;
+        padding: 18px 24px;
         font-size: 1.4rem;
         font-weight: bold;
     }
 
     .subheader {
-        padding: 0 30px 20px;
+        padding: 0 24px 16px;
         color: #e0f2fe;
         font-size: 0.9rem;
     }
 
     .main {
-        padding: 30px;
-        max-width: 1200px;
-        margin: auto;
-    }
-
-    .grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 20px;
-    }
-
-    @media (max-width: 900px) {
-        .grid {
-            grid-template-columns: 1fr;
-        }
+        padding: 24px;
+        max-width: 1100px;
+        margin: 0 auto 32px;
     }
 
     .card {
@@ -60,121 +48,72 @@
         border-radius: 8px;
         border: 1px solid var(--border);
         box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-        margin-bottom: 20px;
     }
 
-    .card-title {
+    .card h3 {
+        margin: 0 0 6px;
         font-size: 1.1rem;
-        font-weight: bold;
-        margin-bottom: 8px;
     }
 
     .card-sub {
         font-size: 0.85rem;
         color: var(--muted);
-        margin-bottom: 12px;
+        margin-bottom: 10px;
+    }
+
+    #status {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-bottom: 8px;
     }
 
     table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 0.85rem;
+        margin-top: 8px;
+        font-size: 0.8rem;
     }
 
-    th, td {
-        border: 1px solid var(--border);
+    table th, table td {
         padding: 6px 8px;
+        border: 1px solid var(--border);
         text-align: center;
     }
 
-    th {
+    table th {
         background: #f9fafb;
         font-weight: bold;
     }
-
-    .status-row {
-        display: flex;
-        justify-content: space-between;
-        background: #f9fafb;
-        padding: 6px 10px;
-        border-radius: 6px;
-        margin-bottom: 6px;
-        border: 1px solid var(--border);
-    }
-
-    .pill {
-        padding: 2px 8px;
-        border-radius: 999px;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
-
-    .neutral { background: #e5e7eb; color: #374151; }
-    .warn { background: #fee2e2; color: #b91c1c; }
-    .ok { background: #dcfce7; color: #166534; }
-
 </style>
 </head>
 
 <body>
 
 <div class="header">Philippines Tropical Cyclone Dashboard</div>
-<div class="subheader">START Network · Model-based trigger and allocation overview</div>
+<div class="subheader">START Network · Live view from Google Sheet</div>
 
 <div class="main">
-
-    <p id="status" style="color: var(--muted); font-size: 0.85rem;">Loading…</p>
-
-    <div class="grid">
-
-        <!-- LEFT SIDE: TRIGGER TABLE -->
-        <div class="card">
-            <div class="card-title">Trigger Probability Table</div>
-            <div class="card-sub">Thresholds, trigger status and predicted probabilities.</div>
-
-            <table id="trigger-table">
+    <div class="card">
+        <h3>Trigger probability and allocations</h3>
+        <div class="card-sub">
+            Data pulled directly from the model output sheet (all rows, all columns).
+        </div>
+        <p id="status">Loading…</p>
+        <div style="overflow-x:auto;">
+            <table id="data-table">
                 <thead></thead>
                 <tbody></tbody>
             </table>
-        </div>
-
-        <!-- RIGHT SIDE: STATUS + ALLOCATIONS -->
-        <div>
-
-            <div class="card">
-                <div class="card-title">Model Status</div>
-                <div class="card-sub">Activation status by province.</div>
-                <div id="model-status"></div>
-            </div>
-
-            <div class="card">
-                <div class="card-title">CP Allocation</div>
-                <div class="card-sub">AA/ER allocation per province.</div>
-                <table id="cp-table">
-                    <thead></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
-            <div class="card">
-                <div class="card-title">Risk Pool (Total) Allocation</div>
-                <div class="card-sub">Allocation by risk level.</div>
-                <table id="risk-table">
-                    <thead></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
         </div>
     </div>
 </div>
 
 <script>
-// Your existing CSV link (kept exactly as-is)
+// Your published CSV URL
 const sheetURL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYBWqeD1x20Y2mtyRLnkkpSM6anZjeIXmNThjQeM1QcIbv1sEkJy2mCeL_PcqBJYw3_dXSLnVX_arh/pub?gid=1699641340&single=true&output=csv";
 
-// CSV parser (unchanged)
+// A robust CSV parser that handles commas, quotes, and line breaks
 function parseCSV(text) {
     const rows = [];
     let current = [];
@@ -218,128 +157,43 @@ function parseCSV(text) {
     });
 }
 
-// Render Trigger Table
-function renderTriggerTable(data) {
-    const table = document.getElementById("trigger-table");
-    const thead = table.querySelector("thead");
-    const tbody = table.querySelector("tbody");
+// Render table
+function renderTable(data) {
+    const thead = document.querySelector("#data-table thead");
+    const tbody = document.querySelector("#data-table tbody");
 
-    const headers = [
-        "Threshold",
-        "Province",
-        "Trigger probability threshold",
-        "Trigger status",
-        "Predicted probability"
-    ];
-
-    thead.innerHTML = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+    thead.innerHTML = "";
     tbody.innerHTML = "";
+
+    if (!data || !data.length) return;
+
+    const headerRow = document.createElement("tr");
+    Object.keys(data[0]).forEach(h => {
+        const th = document.createElement("th");
+        th.textContent = h;
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
 
     data.forEach(row => {
         const tr = document.createElement("tr");
-        headers.forEach(h => {
+        Object.values(row).forEach(v => {
             const td = document.createElement("td");
-            td.textContent = row[h] || "";
+            td.textContent = v;
             tr.appendChild(td);
         });
         tbody.appendChild(tr);
     });
 }
 
-// Render Model Status
-function renderModelStatus(data) {
-    const container = document.getElementById("model-status");
-    container.innerHTML = "";
-
-    const byProvince = {};
-
-    data.forEach(row => {
-        const prov = row["Province"];
-        const status = row["Model Status"];
-        if (prov) byProvince[prov] = status;
-    });
-
-    Object.entries(byProvince).forEach(([prov, status]) => {
-        const div = document.createElement("div");
-        div.className = "status-row";
-
-        const pill = document.createElement("span");
-        pill.className = "pill";
-
-        const s = (status || "").toUpperCase();
-        if (s.includes("NO ACTIVATION")) pill.classList.add("neutral");
-        else if (s.includes("ACTIVATED")) pill.classList.add("warn");
-        else pill.classList.add("ok");
-
-        pill.textContent = status || "—";
-
-        div.innerHTML = `<span>${prov}</span>`;
-        div.appendChild(pill);
-        container.appendChild(div);
-    });
-}
-
-// Render CP Allocation
-function renderCP(data) {
-    const table = document.getElementById("cp-table");
-    const thead = table.querySelector("thead");
-    const tbody = table.querySelector("tbody");
-
-    thead.innerHTML = "<tr><th>Province</th><th>Allocation</th></tr>";
-    tbody.innerHTML = "";
-
-    const byProvince = {};
-
-    data.forEach(row => {
-        const prov = row["Province"];
-        const alloc = row["CP Allocation"];
-        if (prov && alloc) byProvince[prov] = alloc;
-    });
-
-    Object.entries(byProvince).forEach(([prov, alloc]) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${prov}</td><td>${alloc}</td>`;
-        tbody.appendChild(tr);
-    });
-}
-
-// Render Risk Pool Allocation
-function renderRiskPool(data) {
-    const table = document.getElementById("risk-table");
-    const thead = table.querySelector("thead");
-    const tbody = table.querySelector("tbody");
-
-    thead.innerHTML = "<tr><th>Risk Level</th><th>Allocation</th></tr>";
-    tbody.innerHTML = "";
-
-    data.forEach(row => {
-        const cell = row["Risk Pool (Total) Allocation"];
-        if (!cell) return;
-
-        const parts = cell.split(":");
-        const level = parts[0] || "";
-        const amount = parts[1] || "";
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${level}</td><td>${amount}</td>`;
-        tbody.appendChild(tr);
-    });
-}
-
-// Load CSV
+// Load Google Sheet CSV
 async function loadSheet() {
     try {
         const response = await fetch(sheetURL);
         const text = await response.text();
         const data = parseCSV(text);
-
+        renderTable(data);
         document.getElementById("status").innerText = "Loaded successfully";
-
-        renderTriggerTable(data);
-        renderModelStatus(data);
-        renderCP(data);
-        renderRiskPool(data);
-
     } catch (err) {
         document.getElementById("status").innerText = "Error loading data";
         console.error(err);

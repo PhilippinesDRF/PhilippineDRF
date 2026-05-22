@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Philippines TC Dashboard</title>
+
+<style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #f5f5f5; }
+    .main { padding: 30px; }
+    .card {
+        background: white; padding: 20px; border-radius: 6px;
+        margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    table th, table td { padding: 8px; border: 1px solid #ddd; text-align: center; }
+    table th { background: #f3f4f6; }
+</style>
+</head>
+
+<body>
+
+<div class="main">
+    <h1>Philippines Tropical Cyclone Dashboard</h1>
+
+    <div class="card">
+        <h3>Live Data from Google Sheet</h3>
+        <p id="status">Loading…</p>
+        <table id="data-table">
+            <thead></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// Google Sheet CSV export link
+const sheetURL =
+  "https://docs.google.com/spreadsheets/d/1zWwRt7ZK5coRiZ4vqullTUYXQWE08Mxo_TAxregjngw/export?format=csv&gid=1699641340";
+
+// Parse CSV into array of objects
+function parseCSV(text) {
+    const rows = text.trim().split("\n").map(r => r.split(","));
+    const headers = rows[0];
+    return rows.slice(1).map(row => {
+        let obj = {};
+        headers.forEach((h, i) => obj[h] = row[i]);
+        return obj;
+    });
+}
+
+// Render table
+function renderTable(data) {
+    const thead = document.querySelector("#data-table thead");
+    const tbody = document.querySelector("#data-table tbody");
+
+    thead.innerHTML = "";
+    tbody.innerHTML = "";
+
+    const headerRow = document.createElement("tr");
+    Object.keys(data[0]).forEach(h => {
+        const th = document.createElement("th");
+        th.textContent = h;
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+
+    data.forEach(row => {
+        const tr = document.createElement("tr");
+        Object.values(row).forEach(v => {
+            const td = document.createElement("td");
+            td.textContent = v;
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+}
+
+// Load Google Sheet CSV
+async function

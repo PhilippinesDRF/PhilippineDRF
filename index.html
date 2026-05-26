@@ -4,216 +4,313 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Philippines TC Dashboard</title>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
-    /* ------------------------------
-       COLOUR + THEME
-    ------------------------------ */
-    :root {
-        --text: #1a1a1a;
-        --muted: #6b6b6b;
-        --border: #e2e2e2;
-        --bg: #ffffff;
+  :root {
+    --bg: #1a2a4a;
+    --surface: #ffffff;
+    --border: #cccccc;
+    --text: #1a1a1a;
+    --muted: #666666;
+    --header-bg: #f5f5f5;
+  }
 
-        --risk-very-high: #b30000;
-        --risk-high: #b58900;
-        --risk-moderate: #2f7d32;
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        --status-high: #b58900;
-        --status-no: #555;
-        --status-moderate: #2f7d32;
-    }
+  body {
+    background: var(--bg);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 24px;
+  }
 
-    body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-    }
+  h1 {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
 
-    /* ------------------------------
-       LAYOUT
-    ------------------------------ */
-    .main {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 40px 20px;
-    }
+  .subtext {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    margin-bottom: 28px;
+  }
 
-    h1 {
-        font-size: 1.8rem;
-        margin-bottom: 8px;
-        font-weight: bold;
-    }
+  .dashboard {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    max-width: 1100px;
+  }
 
-    .subtext {
-        color: var(--muted);
-        font-size: 0.9rem;
-        margin-bottom: 30px;
-    }
+  .main-table-wrap { flex: 1; min-width: 0; }
 
-    /* ------------------------------
-       TABLE (Pakistan-modern style)
-    ------------------------------ */
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.92rem;
-        margin-bottom: 40px;
-    }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    font-size: 0.85rem;
+  }
 
-    th {
-        text-align: left;
-        padding: 10px 6px;
-        border-bottom: 2px solid var(--border);
-        font-weight: bold;
-        background: #fafafa;
-    }
+  th {
+    background: var(--header-bg);
+    border: 1px solid var(--border);
+    padding: 9px 12px;
+    font-weight: 600;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--text);
+  }
 
-    td {
-        padding: 10px 6px;
-        border-bottom: 1px solid var(--border);
-    }
+  td {
+    border: 1px solid var(--border);
+    padding: 9px 12px;
+    vertical-align: middle;
+    color: var(--text);
+    background: var(--surface);
+  }
 
-    /* No alternating shading — Pakistan style */
-    tr:nth-child(even) td {
-        background: none;
-    }
+  td.province-cell {
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    min-width: 130px;
+  }
 
-    /* ------------------------------
-       COLOUR ACCENTS
-    ------------------------------ */
-    .status-high {
-        color: var(--status-high);
-        font-weight: bold;
-    }
+  td.status-cell { text-align: center; }
 
-    .status-no {
-        color: var(--status-no);
-        font-weight: bold;
-    }
+  td.num-cell {
+    text-align: right;
+    font-size: 0.82rem;
+    min-width: 90px;
+  }
 
-    .status-moderate {
-        color: var(--status-moderate);
-        font-weight: bold;
-    }
+  td.total-cell {
+    font-weight: 700;
+    font-size: 0.82rem;
+    text-align: right;
+    background: #f9f9f9;
+  }
 
-    .risk-very-high {
-        color: var(--risk-very-high);
-        font-weight: bold;
-    }
+  td.total-label {
+    font-weight: 700;
+    font-size: 0.82rem;
+    background: #f9f9f9;
+  }
 
-    .risk-high {
-        color: var(--risk-high);
-        font-weight: bold;
-    }
+  .sub-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: block;
+  }
 
-    .risk-moderate {
-        color: var(--risk-moderate);
-        font-weight: bold;
-    }
+  .badge {
+    display: inline-block;
+    padding: 5px 14px;
+    border-radius: 3px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+    min-width: 130px;
+    text-align: center;
+  }
+  .badge-none     { background: #d6d6d6; color: #444; }
+  .badge-moderate { background: #4caf50; color: #fff; }
+  .badge-high     { background: #f9a825; color: #6b3d00; }
+  .badge-very-high{ background: #e53935; color: #fff; }
+
+  .risk-wrap { flex: 0 0 210px; }
+
+  .risk-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    font-size: 0.85rem;
+  }
+
+  .risk-table th {
+    background: var(--header-bg);
+    border: 1px solid var(--border);
+    padding: 9px 10px;
+    font-weight: 600;
+    text-align: center;
+    font-size: 0.82rem;
+  }
+
+  .risk-table td {
+    border: 1px solid var(--border);
+    padding: 14px 10px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  .risk-pool-name {
+    background: #e8e8e8 !important;
+    color: #555 !important;
+    font-weight: 500 !important;
+    font-size: 0.82rem !important;
+    padding: 8px 10px !important;
+  }
+
+  .risk-very-high { background: #e53935; color: #fff; }
+  .risk-high      { background: #f9a825; color: #6b3d00; }
+  .risk-moderate  { background: #7cb342; color: #2e4a0c; }
+  .risk-empty     { background: #f5f5f5; height: 40px; }
+
+  .loading { color: rgba(255,255,255,0.7); font-size: 0.9rem; padding: 2rem 0; }
+  .error   { color: #ff8a80; font-size: 0.9rem; padding: 2rem 0; }
 </style>
-
 </head>
-
 <body>
-<div class="main">
 
-    <h1>Philippines Tropical Cyclone Dashboard</h1>
-    <div class="subtext">Live data from the model output sheet</div>
+<h1>Philippines Tropical Cyclone Dashboard</h1>
+<div class="subtext">Live data from the model output sheet</div>
 
-    <!-- Single clean table -->
-    <table id="data-table">
-        <thead></thead>
-        <tbody></tbody>
-    </table>
-
+<div class="dashboard">
+  <div class="main-table-wrap" id="main-wrap">
+    <p class="loading">Loading data…</p>
+  </div>
+  <div class="risk-wrap" id="risk-wrap"></div>
 </div>
 
 <script>
-/* ----------------------------------------------------
-   CSV SOURCE
----------------------------------------------------- */
-const sheetURL =
-  "https://docs.google.com/spreadsheets/d/1zWwRt7ZK5coRiZ4vqullTUYXQWE08Mxo_TAxregjngw/export?format=csv&gid=1336158865";
+const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYBWqeD1x20Y2mtyRLnkkpSM6anZjeIXmNThjQeM1QcIbv1sEkJy2mCeL_PcqBJYw3_dXSLnVX_arh/pub?gid=1336158865&single=true&output=csv";
 
-/* ----------------------------------------------------
-   CSV PARSER
----------------------------------------------------- */
-function parseCSV(text) {
-    const rows = text.trim().split("\n").map(r => r.split(","));
-    const headers = rows[0];
-    return rows.slice(1).map(row => {
-        let obj = {};
-        headers.forEach((h, i) => obj[h.trim()] = row[i]?.trim());
-        return obj;
-    });
+function badgeClass(val) {
+  const v = (val || "").toUpperCase();
+  if (v.includes("VERY HIGH")) return "badge-very-high";
+  if (v.includes("HIGH"))      return "badge-high";
+  if (v.includes("MODERATE"))  return "badge-moderate";
+  return "badge-none";
 }
 
-/* ----------------------------------------------------
-   RENDER TABLE (Pakistan-modern)
----------------------------------------------------- */
-function renderTable(data) {
-    const thead = document.querySelector("#data-table thead");
-    const tbody = document.querySelector("#data-table tbody");
-
-    thead.innerHTML = "";
-    tbody.innerHTML = "";
-
-    /* Build header row */
-    const headerRow = document.createElement("tr");
-    Object.keys(data[0]).forEach(h => {
-        const th = document.createElement("th");
-        th.textContent = h;
-        headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-
-    /* Build data rows */
-    data.forEach(row => {
-        const tr = document.createElement("tr");
-
-        Object.entries(row).forEach(([key, value]) => {
-            const td = document.createElement("td");
-
-            /* Status colouring */
-            if (key === "Model Status") {
-                if (value.includes("MODERATE")) td.className = "status-moderate";
-                else if (value.includes("HIGH")) td.className = "status-high";
-                else td.className = "status-no";
-            }
-
-            /* Risk Pool colouring */
-            if (key === "Risk Pool (Total) Allocation") {
-                if (value.includes("Very High")) td.className = "risk-very-high";
-                else if (value.includes("High")) td.className = "risk-high";
-                else td.className = "risk-moderate";
-            }
-
-            td.textContent = value;
-            tr.appendChild(td);
-        });
-
-        tbody.appendChild(tr);
-    });
+function parseMoney(s) {
+  const n = parseFloat((s || "").replace(/[£,\s]/g, ""));
+  return isNaN(n) ? 0 : n;
 }
 
-/* ----------------------------------------------------
-   LOAD SHEET
----------------------------------------------------- */
-async function loadSheet() {
-    try {
-        const response = await fetch(sheetURL);
-        const text = await response.text();
-        const data = parseCSV(text);
-        renderTable(data);
-    } catch (err) {
-        console.error("Error loading sheet:", err);
+function fmtMoney(n) {
+  if (n === 0) return "0";
+  return "£" + n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function render(data) {
+  /* group rows by Province */
+  const provinces = [];
+  const provMap = {};
+  data.forEach(row => {
+    const p = (row["Province"] || "").trim();
+    if (!p) return;
+    if (!provMap[p]) { provMap[p] = []; provinces.push(p); }
+    provMap[p].push(row);
+  });
+
+  /* ── LEFT TABLE ── */
+  let html = `
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2"></th>
+          <th rowspan="2">Model Status</th>
+          <th colspan="2">CP Allocation</th>
+        </tr>
+        <tr>
+          <th>AA</th>
+          <th>ER</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  provinces.forEach(prov => {
+    const rows = provMap[prov];
+    const status = (rows[0]["Model Status"] || "NO ACTIVATION").trim();
+    const spanRows = rows.length + 1;
+
+    rows.forEach((row, idx) => {
+      html += `<tr>`;
+      if (idx === 0) {
+        html += `<td class="province-cell" rowspan="${spanRows}">${prov}</td>`;
+        html += `<td class="status-cell" rowspan="${spanRows}">
+                   <span class="badge ${badgeClass(status)}">${status}</span>
+                 </td>`;
+      }
+      const label = (row["Label"] || row["CP Label"] || row["Type"] || "").trim();
+      const aa = (row["CP Allocation AA"] || "0").trim();
+      const er = (row["CP Allocation ER"] || "0").trim();
+      html += `<td class="num-cell">${label ? `<span class="sub-label">${label}</span>` : ""}${aa}</td>`;
+      html += `<td class="num-cell">${er}</td>`;
+      html += `</tr>`;
+    });
+
+    const totalAA = rows.reduce((s, r) => s + parseMoney(r["CP Allocation AA"]), 0);
+    const totalER = rows.reduce((s, r) => s + parseMoney(r["CP Allocation ER"]), 0);
+    html += `<tr>
+      <td class="total-label">Total ${prov}</td>
+      <td class="total-cell">${fmtMoney(totalAA)}</td>
+      <td class="total-cell">${fmtMoney(totalER)}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  document.getElementById("main-wrap").innerHTML = html;
+
+  /* ── RIGHT TABLE: Risk Pool ── */
+  const riskOrder = ["Very High", "High", "Moderate"];
+  const riskAmounts = {};
+
+  data.forEach(row => {
+    const v = (row["Risk Pool (Total) Allocation"] || "").trim();
+    riskOrder.forEach(lv => {
+      if (v.includes(lv) && riskAmounts[lv] === undefined) {
+        riskAmounts[lv] = v.replace(lv, "").trim();
+      }
+    });
+  });
+
+  const poolNameRow = data.find(r => r["Risk Pool"] || r["Pool Name"] || r["Risk Pool Name"]);
+  const poolName = (poolNameRow && (poolNameRow["Risk Pool"] || poolNameRow["Pool Name"] || poolNameRow["Risk Pool Name"])) || "Risk Pool 5";
+
+  let riskHTML = `
+    <table class="risk-table">
+      <thead>
+        <tr><th>Risk Pool (Total) Allocation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="risk-pool-name">${poolName}</td></tr>`;
+
+  riskOrder.forEach(lv => {
+    const cls = lv === "Very High" ? "risk-very-high" : lv === "High" ? "risk-high" : "risk-moderate";
+    const amt = riskAmounts[lv] !== undefined ? riskAmounts[lv] : "—";
+    riskHTML += `<tr><td class="${cls}">${lv}<br>${amt}</td></tr>`;
+  });
+
+  riskHTML += `<tr><td class="risk-empty"></td></tr></tbody></table>`;
+  document.getElementById("risk-wrap").innerHTML = riskHTML;
+}
+
+/* ── LOAD via PapaParse (handles Google Sheets CORS redirect) ── */
+Papa.parse(sheetURL, {
+  download: true,
+  header: true,
+  skipEmptyLines: true,
+  complete: function(results) {
+    if (results.errors.length && !results.data.length) {
+      document.getElementById("main-wrap").innerHTML =
+        `<p class="error">Error loading data: ${results.errors[0].message}</p>`;
+      return;
     }
-}
-
-loadSheet();
+    render(results.data);
+  },
+  error: function(err) {
+    document.getElementById("main-wrap").innerHTML =
+      `<p class="error">Error loading data: ${err.message}</p>`;
+  }
+});
 </script>
-
 </body>
 </html>
+HTMLEOF
+echo "Done"

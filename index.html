@@ -6,12 +6,22 @@
 <title>Philippines TC Dashboard</title>
 
 <style>
+    /* ------------------------------
+       COLOUR + THEME
+    ------------------------------ */
     :root {
         --text: #1a1a1a;
         --muted: #6b6b6b;
-        --border: #dcdcdc;
+        --border: #e2e2e2;
         --bg: #ffffff;
-        --row-alt: #fafafa;
+
+        --risk-very-high: #b30000;
+        --risk-high: #b58900;
+        --risk-moderate: #2f7d32;
+
+        --status-high: #b58900;
+        --status-no: #555;
+        --status-moderate: #2f7d32;
     }
 
     body {
@@ -21,95 +31,87 @@
         color: var(--text);
     }
 
-    /* Centered narrow layout */
+    /* ------------------------------
+       LAYOUT
+    ------------------------------ */
     .main {
         max-width: 900px;
         margin: 0 auto;
         padding: 40px 20px;
     }
 
-    /* Section titles */
     h1 {
         font-size: 1.8rem;
-        margin-bottom: 10px;
-        font-weight: bold;
-    }
-
-    h2 {
-        font-size: 1.3rem;
-        margin-top: 40px;
-        margin-bottom: 12px;
+        margin-bottom: 8px;
         font-weight: bold;
     }
 
     .subtext {
         color: var(--muted);
         font-size: 0.9rem;
-        margin-bottom: 25px;
-    }
-
-    /* Tables */
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.9rem;
         margin-bottom: 30px;
     }
 
-    table th {
-        text-align: left;
-        padding: 8px;
-        border-bottom: 2px solid var(--border);
-        font-weight: bold;
-        background: #f7f7f7;
+    /* ------------------------------
+       TABLE (Pakistan-modern style)
+    ------------------------------ */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.92rem;
+        margin-bottom: 40px;
     }
 
-    table td {
-        padding: 8px;
+    th {
+        text-align: left;
+        padding: 10px 6px;
+        border-bottom: 2px solid var(--border);
+        font-weight: bold;
+        background: #fafafa;
+    }
+
+    td {
+        padding: 10px 6px;
         border-bottom: 1px solid var(--border);
     }
 
-    table tr:nth-child(even) td {
-        background: var(--row-alt);
-  
+    /* No alternating shading — Pakistan style */
+    tr:nth-child(even) td {
+        background: none;
     }
 
-    /* Group labels */
-.group-label {
-    font-weight: bold;
-    margin-top: 25px;
-    margin-bottom: 6px;
-    font-size: 1rem;
-    color: #333;
-}
+    /* ------------------------------
+       COLOUR ACCENTS
+    ------------------------------ */
+    .status-high {
+        color: var(--status-high);
+        font-weight: bold;
+    }
 
-/* Status colours */
-.status-high {
-    color: #b58900;
-    font-weight: bold;
-}
+    .status-no {
+        color: var(--status-no);
+        font-weight: bold;
+    }
 
-.status-no {
-    color: #555;
-    font-weight: bold;
-}
+    .status-moderate {
+        color: var(--status-moderate);
+        font-weight: bold;
+    }
 
-/* Risk pool colours */
-.risk-very-high {
-    color: #b30000;
-    font-weight: bold;
-}
+    .risk-very-high {
+        color: var(--risk-very-high);
+        font-weight: bold;
+    }
 
-.risk-high {
-    color: #b58900;
-    font-weight: bold;
-}
+    .risk-high {
+        color: var(--risk-high);
+        font-weight: bold;
+    }
 
-.risk-moderate {
-    color: #2f7d32;
-    font-weight: bold;
-}
-
+    .risk-moderate {
+        color: var(--risk-moderate);
+        font-weight: bold;
+    }
 </style>
 
 </head>
@@ -120,31 +122,24 @@
     <h1>Philippines Tropical Cyclone Dashboard</h1>
     <div class="subtext">Live data from the model output sheet</div>
 
-    <h2>Trigger Probability & Allocations</h2>
+    <!-- Single clean table -->
     <table id="data-table">
         <thead></thead>
         <tbody></tbody>
     </table>
 
-    <h2>Model Status</h2>
-    <div id="model-status"></div>
-
-    <h2>CP Allocation</h2>
-    <table id="cp-table"></table>
-
-    <h2>Risk Pool (Total) Allocation</h2>
-    <div id="risk-pool"></div>
-
 </div>
 
-<!-- Your JS goes here -->
-
 <script>
-// Google Sheet CSV export link
-const sheetURL = "https://docs.google.com/spreadsheets/d/1zWwRt7ZK5coRiZ4vqullTUYXQWE08Mxo_TAxregjngw/export?format=csv&gid=1336158865";
+/* ----------------------------------------------------
+   CSV SOURCE
+---------------------------------------------------- */
+const sheetURL =
+  "https://docs.google.com/spreadsheets/d/1zWwRt7ZK5coRiZ4vqullTUYXQWE08Mxo_TAxregjngw/export?format=csv&gid=1336158865";
 
-
-// Parse CSV into array of objects
+/* ----------------------------------------------------
+   CSV PARSER
+---------------------------------------------------- */
 function parseCSV(text) {
     const rows = text.trim().split("\n").map(r => r.split(","));
     const headers = rows[0];
@@ -155,20 +150,9 @@ function parseCSV(text) {
     });
 }
 
-// Group rows by province
-function groupByProvince(data) {
-    const groups = {};
-    data.forEach(row => {
-        const p = row["Province"];
-        if (!groups[p]) groups[p] = [];
-        groups[p].push(row);
-    });
-    return groups;
-}
-
-// -------------------------------
-// MAIN TRIGGER TABLE
-// -------------------------------
+/* ----------------------------------------------------
+   RENDER TABLE (Pakistan-modern)
+---------------------------------------------------- */
 function renderTable(data) {
     const thead = document.querySelector("#data-table thead");
     const tbody = document.querySelector("#data-table tbody");
@@ -176,6 +160,7 @@ function renderTable(data) {
     thead.innerHTML = "";
     tbody.innerHTML = "";
 
+    /* Build header row */
     const headerRow = document.createElement("tr");
     Object.keys(data[0]).forEach(h => {
         const th = document.createElement("th");
@@ -184,155 +169,50 @@ function renderTable(data) {
     });
     thead.appendChild(headerRow);
 
-    const groups = groupByProvince(data);
-
-    Object.keys(groups).forEach(province => {
-        // Province label row
-        const labelRow = document.createElement("tr");
-        const labelCell = document.createElement("td");
-        labelCell.colSpan = Object.keys(data[0]).length;
-        labelCell.className = "group-label";
-        labelCell.textContent = province;
-        labelRow.appendChild(labelCell);
-        tbody.appendChild(labelRow);
-
-        // Data rows
-        groups[province].forEach(row => {
-            const tr = document.createElement("tr");
-            Object.values(row).forEach(v => {
-                const td = document.createElement("td");
-                td.textContent = v;
-                tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
-        });
-    });
-}
-
-// -------------------------------
-// MODEL STATUS TABLE
-// -------------------------------
-function populateModelStatus(data) {
-    const container = document.getElementById("model-status");
-    container.innerHTML = "";
-
-    const table = document.createElement("table");
-    table.innerHTML = `
-        <tr>
-            <th>Province</th>
-            <th>Status</th>
-        </tr>
-    `;
-
-    const groups = groupByProvince(data);
-
-    Object.keys(groups).forEach(province => {
-        const status = groups[province][0]["Model Status"];
-
+    /* Build data rows */
+    data.forEach(row => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${province}</td>
-            <td class="${status === "HIGH" ? "status-high" : "status-no"}">${status}</td>
-        `;
-        table.appendChild(tr);
-    });
 
-    container.appendChild(table);
-}
+        Object.entries(row).forEach(([key, value]) => {
+            const td = document.createElement("td");
 
-// -------------------------------
-// CP ALLOCATION TABLE
-// -------------------------------
-function populateCPAllocation(data) {
-    const table = document.getElementById("cp-table");
-    table.innerHTML = `
-        <tr>
-            <th>Province</th>
-            <th>AA</th>
-            <th>ER</th>
-            <th>Total</th>
-        </tr>
-    `;
+            /* Status colouring */
+            if (key === "Model Status") {
+                if (value.includes("MODERATE")) td.className = "status-moderate";
+                else if (value.includes("HIGH")) td.className = "status-high";
+                else td.className = "status-no";
+            }
 
-    const groups = groupByProvince(data);
+            /* Risk Pool colouring */
+            if (key === "Risk Pool (Total) Allocation") {
+                if (value.includes("Very High")) td.className = "risk-very-high";
+                else if (value.includes("High")) td.className = "risk-high";
+                else td.className = "risk-moderate";
+            }
 
-    Object.keys(groups).forEach(province => {
-        let aa = 0, er = 0, total = 0;
-
-        groups[province].forEach(row => {
-            aa += Number(row["CP Allocation AA"] || 0);
-            er += Number(row["CP Allocation ER"] || 0);
-            total += Number(row["CP Allocation Total"] || 0);
+            td.textContent = value;
+            tr.appendChild(td);
         });
 
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${province}</td>
-            <td>£${aa.toLocaleString()}</td>
-            <td>£${er.toLocaleString()}</td>
-            <td>£${total.toLocaleString()}</td>
-        `;
-        table.appendChild(tr);
+        tbody.appendChild(tr);
     });
 }
 
-// -------------------------------
-// RISK POOL TABLE
-// -------------------------------
-function populateRiskPool(data) {
-    const container = document.getElementById("risk-pool");
-    container.innerHTML = "";
-
-    const table = document.createElement("table");
-    table.innerHTML = `
-        <tr>
-            <th>Province</th>
-            <th>Risk Pool Allocation</th>
-        </tr>
-    `;
-
-    const groups = groupByProvince(data);
-
-    Object.keys(groups).forEach(province => {
-        const value = groups[province][0]["Risk Pool (Total) Allocation"];
-
-        // Determine category
-        let cls = "risk-moderate";
-        if (value.includes("Very High")) cls = "risk-very-high";
-        else if (value.includes("High")) cls = "risk-high";
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${province}</td>
-            <td class="${cls}">${value}</td>
-        `;
-        table.appendChild(tr);
-    });
-
-    container.appendChild(table);
-}
-
-// -------------------------------
-// LOAD EVERYTHING
-// -------------------------------
+/* ----------------------------------------------------
+   LOAD SHEET
+---------------------------------------------------- */
 async function loadSheet() {
     try {
         const response = await fetch(sheetURL);
         const text = await response.text();
         const data = parseCSV(text);
-
         renderTable(data);
-        populateModelStatus(data);
-        populateCPAllocation(data);
-        populateRiskPool(data);
-
     } catch (err) {
         console.error("Error loading sheet:", err);
     }
 }
 
 loadSheet();
-
 </script>
 
 </body>

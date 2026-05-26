@@ -80,6 +80,43 @@
         margin-bottom: 8px;
         color: var(--text);
     }
+
+    /* Group labels */
+.group-label {
+    font-weight: bold;
+    margin-top: 25px;
+    margin-bottom: 6px;
+    font-size: 1rem;
+    color: #333;
+}
+
+/* Status colours */
+.status-high {
+    color: #b58900;
+    font-weight: bold;
+}
+
+.status-no {
+    color: #555;
+    font-weight: bold;
+}
+
+/* Risk pool colours */
+.risk-very-high {
+    color: #b30000;
+    font-weight: bold;
+}
+
+.risk-high {
+    color: #b58900;
+    font-weight: bold;
+}
+
+.risk-moderate {
+    color: #2f7d32;
+    font-weight: bold;
+}
+
 </style>
 
 </head>
@@ -113,63 +150,82 @@
 
 
 <script>
-// Your published CSV URL
-const sheetURL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYBWqeD1x20Y2mtyRLnkkpSM6anZjeIXmNThjQeM1QcIbv1sEkJy2mCeL_PcqBJYw3_dXSLnVX_arh/pub?gid=1336158865&single=true&output=csv";
+// Google Sheet CSV export link
+const sheetURL = "YOUR_CSV_LINK_HERE";
 
-// A robust CSV parser that handles commas, quotes, and line breaks
+// Parse CSV into array of objects
 function parseCSV(text) {
-    const rows = [];
-    let current = [];
-    let value = "";
-    let insideQuotes = false;
-
-    for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        const next = text[i + 1];
-
-        if (char === '"' && insideQuotes && next === '"') {
-            value += '"';
-            i++;
-        } else if (char === '"') {
-            insideQuotes = !insideQuotes;
-        } else if (char === ',' && !insideQuotes) {
-            current.push(value);
-            value = "";
-        } else if ((char === '\n' || char === '\r') && !insideQuotes) {
-            if (value || current.length) {
-                current.push(value);
-                rows.push(current);
-                current = [];
-                value = "";
-            }
-        } else {
-            value += char;
-        }
-    }
-
-    if (value || current.length) {
-        current.push(value);
-        rows.push(current);
-    }
-
+    const rows = text.trim().split("\n").map(r => r.split(","));
     const headers = rows[0];
     return rows.slice(1).map(row => {
         let obj = {};
-        headers.forEach((h, i) => obj[h] = row[i] || "");
+        headers.forEach((h, i) => obj[h.trim()] = row[i]?.trim());
         return obj;
     });
 }
 
-// Render table
-// Build Model Status table
+// Group rows by province
+function groupByProvince(data) {
+    const groups = {};
+    data.forEach(row => {
+        const p = row["Province"];
+        if (!groups[p]) groups[p] = [];
+        groups[p].push(row);
+    });
+    return groups;
+}
+
+// -------------------------------
+// MAIN TRIGGER TABLE
+// -------------------------------
+function renderTable(data) {
+    const thead = document.querySelector("#data-table thead");
+    const tbody = document.querySelector("#data-table tbody");
+
+    thead.innerHTML = "";
+    tbody.innerHTML = "";
+
+    const headerRow = document.createElement("tr");
+    Object.keys(data[0]).forEach(h => {
+        const th = document.createElement("th");
+        th.textContent = h;
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+
+    const groups = groupByProvince(data);
+
+    Object.keys(groups).forEach(province => {
+        // Province label row
+        const labelRow = document.createElement("tr");
+        const labelCell = document.createElement("td");
+        labelCell.colSpan = Object.keys(data[0]).length;
+        labelCell.className = "group-label";
+        labelCell.textContent = province;
+        labelRow.appendChild(labelCell);
+        tbody.appendChild(labelRow);
+
+        // Data rows
+        groups[province].forEach(row => {
+            const tr = document.createElement("tr");
+            Object.values(row).forEach(v => {
+                const td = document.createElement("td");
+                td.textContent = v;
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+    });
+}
+
+// -------------------------------
+// MODEL STATUS TABLE
+// -------------------------------
 function populateModelStatus(data) {
     const container = document.getElementById("model-status");
     container.innerHTML = "";
 
     const table = document.createElement("table");
-    table.className = "small-table";
-
     table.innerHTML = `
         <tr>
             <th>Province</th>
@@ -177,11 +233,15 @@ function populateModelStatus(data) {
         </tr>
     `;
 
-    data.forEach(row => {
+    const groups = groupByProvince(data);
+
+    Object.keys(groups).forEach(province => {
+        const status = groups[province][0]["Model Status"];
+
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>${row["Province"]}</td>
-            <td>${row["Model Status"]}</td>
+            <td>${province}</td>
+            <td class="${status === "HIGH" ? "status-high" : "status-no"}">${status}</td>
         `;
         table.appendChild(tr);
     });
@@ -189,10 +249,12 @@ function populateModelStatus(data) {
     container.appendChild(table);
 }
 
-// Build CP Allocation table
+// -------------------------------
+// CP ALLOCATION TABLE
+// -------------------------------
 function populateCPAllocation(data) {
-    const container = document.getElementById("cp-table");
-    container.innerHTML = `
+    const table = document.getElementById("cp-table");
+    table.innerHTML = `
         <tr>
             <th>Province</th>
             <th>AA</th>
@@ -201,30 +263,36 @@ function populateCPAllocation(data) {
         </tr>
     `;
 
-    data.forEach(row => {
-        const aa = row["CP Allocation AA"] || row["AA"] || row["CP Allocation"];
-        const er = row["CP Allocation ER"] || row["ER"];
-        const total = row["CP Allocation Total"] || row["Total"] || row["CP Allocation (Total)"];
+    const groups = groupByProvince(data);
+
+    Object.keys(groups).forEach(province => {
+        let aa = 0, er = 0, total = 0;
+
+        groups[province].forEach(row => {
+            aa += Number(row["CP Allocation AA"] || 0);
+            er += Number(row["CP Allocation ER"] || 0);
+            total += Number(row["CP Allocation Total"] || 0);
+        });
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>${row["Province"]}</td>
-            <td>${aa || 0}</td>
-            <td>${er || 0}</td>
-            <td>${total || 0}</td>
+            <td>${province}</td>
+            <td>£${aa.toLocaleString()}</td>
+            <td>£${er.toLocaleString()}</td>
+            <td>£${total.toLocaleString()}</td>
         `;
-        container.appendChild(tr);
+        table.appendChild(tr);
     });
 }
 
-// Build Risk Pool Allocation table
+// -------------------------------
+// RISK POOL TABLE
+// -------------------------------
 function populateRiskPool(data) {
     const container = document.getElementById("risk-pool");
     container.innerHTML = "";
 
     const table = document.createElement("table");
-    table.className = "small-table";
-
     table.innerHTML = `
         <tr>
             <th>Province</th>
@@ -232,11 +300,20 @@ function populateRiskPool(data) {
         </tr>
     `;
 
-    data.forEach(row => {
+    const groups = groupByProvince(data);
+
+    Object.keys(groups).forEach(province => {
+        const value = groups[province][0]["Risk Pool (Total) Allocation"];
+
+        // Determine category
+        let cls = "risk-moderate";
+        if (value.includes("Very High")) cls = "risk-very-high";
+        else if (value.includes("High")) cls = "risk-high";
+
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>${row["Province"]}</td>
-            <td>${row["Risk Pool (Total) Allocation"]}</td>
+            <td>${province}</td>
+            <td class="${cls}">${value}</td>
         `;
         table.appendChild(tr);
     });
@@ -244,30 +321,27 @@ function populateRiskPool(data) {
     container.appendChild(table);
 }
 
-
-// Load Google Sheet CSV
+// -------------------------------
+// LOAD EVERYTHING
+// -------------------------------
 async function loadSheet() {
     try {
         const response = await fetch(sheetURL);
         const text = await response.text();
         const data = parseCSV(text);
 
-        // Main trigger table
         renderTable(data);
-
-        // New tables
         populateModelStatus(data);
         populateCPAllocation(data);
         populateRiskPool(data);
 
-        document.getElementById("status").innerText = "Loaded successfully";
     } catch (err) {
-        document.getElementById("status").innerText = "Error loading data";
-        console.error(err);
+        console.error("Error loading sheet:", err);
     }
 }
 
 loadSheet();
+
 </script>
 
 </body>

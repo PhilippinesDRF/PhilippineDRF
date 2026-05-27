@@ -350,6 +350,16 @@ function render(data) {
   /* update timestamp */
   document.getElementById("last-updated").textContent = "Last updated: " + nowUTC();
 
+  /* forward-fill Province + Model Status for merged cells exported as blanks */
+  let lastProvince = "";
+  let lastStatus = "";
+  data.forEach(row => {
+    const p = (row["Province"] || "").trim();
+    const s = (row["Model Status"] || "").trim();
+    if (p) lastProvince = p; else row["Province"] = lastProvince;
+    if (s) lastStatus = s;   else row["Model Status"] = lastStatus;
+  });
+
   /* group rows by Province */
   const provinces = [];
   const provMap = {};

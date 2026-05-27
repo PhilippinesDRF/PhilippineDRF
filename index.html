@@ -86,7 +86,7 @@
     display: flex;
     gap: 16px;
     align-items: flex-start;
-    max-width: 1140px;
+    max-width: 1300px;
   }
 
   .main-table-wrap {
@@ -102,7 +102,7 @@
     width: 100%;
     border-collapse: collapse;
     background: var(--surface);
-    font-size: 0.84rem;
+    font-size: 0.95rem;
   }
 
   thead tr:first-child th {
@@ -112,10 +112,11 @@
     font-size: 0.8rem;
     letter-spacing: 0.03em;
     text-transform: uppercase;
-    padding: 13px 14px;
+    padding: 15px 18px;
     border: none;
     border-right: 1px solid rgba(255,255,255,0.1);
     text-align: center;
+    font-size: 0.88rem;
   }
 
   thead tr:first-child th:first-child { text-align: left; }
@@ -123,7 +124,7 @@
 
   td {
     border: 1px solid var(--border);
-    padding: 13px 14px;
+    padding: 15px 18px;
     vertical-align: middle;
     color: var(--text);
     background: var(--surface);
@@ -134,9 +135,9 @@
 
   td.province-cell {
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     white-space: nowrap;
-    min-width: 140px;
+    min-width: 155px;
     color: #1e3a6e;
     border-left: 3px solid var(--accent);
   }
@@ -148,17 +149,17 @@
 
   td.consortium-cell {
     text-align: center;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 500;
     color: var(--muted);
-    min-width: 80px;
+    min-width: 90px;
     letter-spacing: 0.02em;
   }
 
   td.num-cell {
     text-align: right;
-    font-size: 0.82rem;
-    min-width: 110px;
+    font-size: 0.92rem;
+    min-width: 120px;
     font-variant-numeric: tabular-nums;
     color: #2d3a5e;
   }
@@ -168,13 +169,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 5px 16px;
+    padding: 7px 20px;
     border-radius: 999px;
     font-weight: 700;
-    font-size: 0.72rem;
+    font-size: 0.8rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    min-width: 140px;
+    min-width: 155px;
     gap: 6px;
   }
 
@@ -215,7 +216,8 @@
 
   /* ── Risk Panel ── */
   .risk-wrap {
-    flex: 0 0 190px;
+    flex: 0 0 220px;
+    margin-left: auto;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 4px 24px rgba(0,0,0,0.3);
@@ -251,23 +253,23 @@
   }
 
   .risk-cell {
-    padding: 18px 12px;
+    padding: 22px 14px;
     text-align: center;
     border: none;
     border-top: 1px solid rgba(255,255,255,0.15);
   }
 
   .risk-cell .risk-level {
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
   }
 
   .risk-cell .risk-amount {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     font-weight: 700;
     display: block;
   }
@@ -325,7 +327,7 @@
   <div class="risk-wrap" id="risk-wrap"></div>
 </div>
 
-<div style="max-width:1140px; margin-top:28px; color:rgba(255,255,255,0.85); font-style:italic; font-size:0.85rem; line-height:1.75; display:flex; flex-direction:column; gap:12px;">
+<div style="max-width:1300px; margin-top:28px; color:rgba(255,255,255,0.85); font-style:italic; font-size:0.85rem; line-height:1.75; display:flex; flex-direction:column; gap:12px;">
   <p>The Start Network system covers three provinces: Cagayan, Eastern Samar and Surigao del Norte. Each province has an activation risk matrix, measuring impacted population. The risk activation matrix was developed as a reference for possible activation of the DRF system if the threshold is met.</p>
   <p>Once a cyclone enters the PAR (Philippines Area of Responsibility), automatically, the system sends an email alert to In-Country Secretariat, Technical Working Group, Governance Team, and Implementing Consortium for immediate data interpretation and, if required, action. Upon receipt of the email, the Secretariat endorses the alert to the TWG and GT for decision-making.</p>
   <p>For more information, please check the <a href="https://start-network.app.box.com/file/2058719288865" target="_blank" style="color:#93c5fd; text-decoration:underline; text-underline-offset:3px;">Philippines Cyclone Model Brief</a> or email <a href="mailto:startready@startnetwork.org" style="color:#93c5fd; text-decoration:underline; text-underline-offset:3px;">startready@startnetwork.org</a></p>

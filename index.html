@@ -6,168 +6,317 @@
 <title>Philippines TC Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
   :root {
-    --bg: #1a2a4a;
+    --bg: #0f1f3d;
+    --bg2: #162444;
     --surface: #ffffff;
-    --border: #cccccc;
-    --text: #1a1a1a;
-    --muted: #666666;
-    --header-bg: #f5f5f5;
+    --border: #e0e4ef;
+    --text: #1a1a2e;
+    --muted: #7a8299;
+    --header-bg: #f4f6fb;
+    --accent: #3b82f6;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     background: var(--bg);
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
     color: var(--text);
     min-height: 100vh;
-    padding: 40px 24px;
+    padding: 36px 28px;
+  }
+
+  /* ── Header ── */
+  .header {
+    margin-bottom: 28px;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .header-icon {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
   }
 
   h1 {
     color: #ffffff;
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 4px;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
   }
 
   .subtext {
-    color: rgba(255,255,255,0.6);
-    font-size: 0.85rem;
-    margin-bottom: 28px;
+    color: rgba(255,255,255,0.45);
+    font-size: 0.8rem;
+    margin-left: 48px;
+    margin-bottom: 4px;
   }
 
+  .last-updated {
+    color: rgba(255,255,255,0.35);
+    font-size: 0.75rem;
+    margin-left: 48px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .last-updated::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 6px #22c55e;
+  }
+
+  /* ── Dashboard layout ── */
   .dashboard {
     display: flex;
-    gap: 20px;
+    gap: 16px;
     align-items: flex-start;
-    max-width: 1100px;
+    max-width: 1140px;
   }
 
-  .main-table-wrap { flex: 1; min-width: 0; }
+  .main-table-wrap {
+    flex: 1;
+    min-width: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
 
+  /* ── Main Table ── */
   table {
     width: 100%;
     border-collapse: collapse;
     background: var(--surface);
-    font-size: 0.85rem;
+    font-size: 0.84rem;
   }
 
-  th {
-    background: var(--header-bg);
-    border: 1px solid var(--border);
-    padding: 9px 12px;
+  thead tr:first-child th {
+    background: #1e3a6e;
+    color: #ffffff;
     font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 13px 14px;
+    border: none;
+    border-right: 1px solid rgba(255,255,255,0.1);
     text-align: center;
-    font-size: 0.82rem;
-    color: var(--text);
   }
+
+  thead tr:first-child th:first-child { text-align: left; }
+  thead tr:first-child th:last-child { border-right: none; }
 
   td {
     border: 1px solid var(--border);
-    padding: 9px 12px;
+    padding: 13px 14px;
     vertical-align: middle;
     color: var(--text);
     background: var(--surface);
+    transition: background 0.15s;
   }
+
+  tr:hover td { background: #f8faff; }
 
   td.province-cell {
     font-weight: 600;
     font-size: 0.85rem;
     white-space: nowrap;
-    min-width: 130px;
+    min-width: 140px;
+    color: #1e3a6e;
+    border-left: 3px solid var(--accent);
   }
 
-  td.status-cell { text-align: center; }
+  td.status-cell {
+    text-align: center;
+    min-width: 160px;
+  }
+
+  td.consortium-cell {
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+    min-width: 80px;
+    letter-spacing: 0.02em;
+  }
 
   td.num-cell {
     text-align: right;
     font-size: 0.82rem;
-    min-width: 90px;
+    min-width: 110px;
+    font-variant-numeric: tabular-nums;
+    color: #2d3a5e;
   }
 
-  td.total-cell {
-    font-weight: 700;
-    font-size: 0.82rem;
-    text-align: right;
-    background: #f9f9f9;
-  }
-
-  td.total-label {
-    font-weight: 700;
-    font-size: 0.82rem;
-    background: #f9f9f9;
-  }
-
-  .sub-label {
-    font-size: 0.75rem;
-    color: var(--muted);
-    display: block;
-  }
-
+  /* ── Status Badge ── */
   .badge {
-    display: inline-block;
-    padding: 5px 14px;
-    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 16px;
+    border-radius: 999px;
     font-weight: 700;
-    font-size: 0.78rem;
-    letter-spacing: 0.02em;
-    min-width: 130px;
-    text-align: center;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    min-width: 140px;
+    gap: 6px;
   }
-  .badge-none     { background: #d6d6d6; color: #444; }
-  .badge-moderate { background: #4caf50; color: #fff; }
-  .badge-high     { background: #f9a825; color: #6b3d00; }
-  .badge-very-high{ background: #e53935; color: #fff; }
 
-  .risk-wrap { flex: 0 0 210px; }
+  .badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .badge-none {
+    background: #f0f0f0;
+    color: #777;
+    border: 1.5px solid #ddd;
+  }
+  .badge-none::before { background: #aaa; }
+
+  .badge-moderate {
+    background: #dcfce7;
+    color: #166534;
+    border: 1.5px solid #86efac;
+  }
+  .badge-moderate::before { background: #22c55e; }
+
+  .badge-high {
+    background: #fef9c3;
+    color: #854d0e;
+    border: 1.5px solid #fde047;
+  }
+  .badge-high::before { background: #eab308; }
+
+  .badge-very-high {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #fca5a5;
+  }
+  .badge-very-high::before { background: #ef4444; }
+
+  /* ── Risk Panel ── */
+  .risk-wrap {
+    flex: 0 0 190px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
 
   .risk-table {
     width: 100%;
     border-collapse: collapse;
-    background: var(--surface);
-    font-size: 0.85rem;
+    font-size: 0.84rem;
   }
 
-  .risk-table th {
-    background: var(--header-bg);
-    border: 1px solid var(--border);
-    padding: 9px 10px;
+  .risk-header {
+    background: #1e3a6e;
+    color: #ffffff;
     font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 13px 12px;
     text-align: center;
-    font-size: 0.82rem;
-  }
-
-  .risk-table td {
-    border: 1px solid var(--border);
-    padding: 14px 10px;
-    text-align: center;
-    font-weight: 700;
-    font-size: 0.85rem;
+    border: none;
   }
 
   .risk-pool-name {
-    background: #e8e8e8 !important;
-    color: #555 !important;
-    font-weight: 500 !important;
-    font-size: 0.82rem !important;
-    padding: 8px 10px !important;
+    background: #e8ecf5;
+    color: #5a6a8a;
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 10px 12px;
+    text-align: center;
+    border: none;
+    letter-spacing: 0.02em;
   }
 
-  .risk-very-high { background: #e53935; color: #fff; }
-  .risk-high      { background: #f9a825; color: #6b3d00; }
-  .risk-moderate  { background: #7cb342; color: #2e4a0c; }
-  .risk-empty     { background: #f5f5f5; height: 40px; }
+  .risk-cell {
+    padding: 18px 12px;
+    text-align: center;
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
 
-  .loading { color: rgba(255,255,255,0.7); font-size: 0.9rem; padding: 2rem 0; }
-  .error   { color: #ff8a80; font-size: 0.9rem; padding: 2rem 0; }
+  .risk-cell .risk-level {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .risk-cell .risk-amount {
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: block;
+  }
+
+  .risk-very-high { background: #dc2626; color: #fff; }
+  .risk-high      { background: #d97706; color: #fff; }
+  .risk-moderate  { background: #65a30d; color: #fff; }
+
+  .risk-empty {
+    background: #f4f6fb;
+    height: 30px;
+    border: none;
+  }
+
+  /* ── States ── */
+  .loading {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.85rem;
+    padding: 2rem 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .loading::before {
+    content: '';
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error { color: #ff8a80; font-size: 0.85rem; padding: 2rem 0; }
 </style>
 </head>
 <body>
 
-<h1>Philippines Tropical Cyclone Dashboard</h1>
-<div class="subtext">Live data from the model output sheet</div>
+<div class="header">
+  <div class="header-top">
+    <div class="header-icon">🌀</div>
+    <h1>Philippines Tropical Cyclone Dashboard</h1>
+  </div>
+  <div class="subtext">Live data from the model output sheet</div>
+  <div class="last-updated" id="last-updated">Fetching data…</div>
+</div>
 
 <div class="dashboard">
   <div class="main-table-wrap" id="main-wrap">
@@ -192,12 +341,15 @@ function parseMoney(s) {
   return isNaN(n) ? 0 : n;
 }
 
-function fmtMoney(n) {
-  if (n === 0) return "0";
-  return "£" + n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function nowUTC() {
+  const now = new Date();
+  return now.toUTCString().replace("GMT", "UTC");
 }
 
 function render(data) {
+  /* update timestamp */
+  document.getElementById("last-updated").textContent = "Last updated: " + nowUTC();
+
   /* group rows by Province */
   const provinces = [];
   const provMap = {};
@@ -213,13 +365,11 @@ function render(data) {
     <table>
       <thead>
         <tr>
-          <th rowspan="2"></th>
-          <th rowspan="2">Model Status</th>
-          <th colspan="2">CP Allocation</th>
-        </tr>
-        <tr>
-          <th>AA</th>
-          <th>ER</th>
+          <th style="text-align:left">Province</th>
+          <th>Model Status</th>
+          <th>Consortium</th>
+          <th>CP Allocation AA</th>
+          <th>CP Allocation ER</th>
         </tr>
       </thead>
       <tbody>`;
@@ -227,31 +377,24 @@ function render(data) {
   provinces.forEach(prov => {
     const rows = provMap[prov];
     const status = (rows[0]["Model Status"] || "NO ACTIVATION").trim();
-    const spanRows = rows.length + 1;
+    const span = rows.length;
 
     rows.forEach((row, idx) => {
       html += `<tr>`;
       if (idx === 0) {
-        html += `<td class="province-cell" rowspan="${spanRows}">${prov}</td>`;
-        html += `<td class="status-cell" rowspan="${spanRows}">
+        html += `<td class="province-cell" rowspan="${span}">${prov}</td>`;
+        html += `<td class="status-cell" rowspan="${span}">
                    <span class="badge ${badgeClass(status)}">${status}</span>
                  </td>`;
       }
-      const label = (row["Label"] || row["CP Label"] || row["Type"] || "").trim();
+      const consortium = (row["Consortium"] || row["Label"] || row["CP Label"] || row["Type"] || "").trim();
       const aa = (row["CP Allocation AA"] || "0").trim();
       const er = (row["CP Allocation ER"] || "0").trim();
-      html += `<td class="num-cell">${label ? `<span class="sub-label">${label}</span>` : ""}${aa}</td>`;
+      html += `<td class="consortium-cell">${consortium}</td>`;
+      html += `<td class="num-cell">${aa}</td>`;
       html += `<td class="num-cell">${er}</td>`;
       html += `</tr>`;
     });
-
-    const totalAA = rows.reduce((s, r) => s + parseMoney(r["CP Allocation AA"]), 0);
-    const totalER = rows.reduce((s, r) => s + parseMoney(r["CP Allocation ER"]), 0);
-    html += `<tr>
-      <td class="total-label">Total ${prov}</td>
-      <td class="total-cell">${fmtMoney(totalAA)}</td>
-      <td class="total-cell">${fmtMoney(totalER)}</td>
-    </tr>`;
   });
 
   html += `</tbody></table>`;
@@ -273,25 +416,26 @@ function render(data) {
   const poolNameRow = data.find(r => r["Risk Pool"] || r["Pool Name"] || r["Risk Pool Name"]);
   const poolName = (poolNameRow && (poolNameRow["Risk Pool"] || poolNameRow["Pool Name"] || poolNameRow["Risk Pool Name"])) || "Risk Pool 5";
 
-  let riskHTML = `
-    <table class="risk-table">
-      <thead>
-        <tr><th>Risk Pool (Total) Allocation</th></tr>
-      </thead>
-      <tbody>
-        <tr><td class="risk-pool-name">${poolName}</td></tr>`;
+  let riskHTML = `<table class="risk-table">
+    <thead>
+      <tr><th class="risk-header">Risk Pool (Total)<br>Allocation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="risk-pool-name">${poolName}</td></tr>`;
 
+  const riskClasses = { "Very High": "risk-very-high", "High": "risk-high", "Moderate": "risk-moderate" };
   riskOrder.forEach(lv => {
-    const cls = lv === "Very High" ? "risk-very-high" : lv === "High" ? "risk-high" : "risk-moderate";
     const amt = riskAmounts[lv] !== undefined ? riskAmounts[lv] : "—";
-    riskHTML += `<tr><td class="${cls}">${lv}<br>${amt}</td></tr>`;
+    riskHTML += `<tr><td class="risk-cell ${riskClasses[lv]}">
+      <span class="risk-level">${lv}</span>
+      <span class="risk-amount">${amt}</span>
+    </td></tr>`;
   });
 
   riskHTML += `<tr><td class="risk-empty"></td></tr></tbody></table>`;
   document.getElementById("risk-wrap").innerHTML = riskHTML;
 }
 
-/* ── LOAD via PapaParse (handles Google Sheets CORS redirect) ── */
 Papa.parse(sheetURL, {
   download: true,
   header: true,
@@ -300,6 +444,7 @@ Papa.parse(sheetURL, {
     if (results.errors.length && !results.data.length) {
       document.getElementById("main-wrap").innerHTML =
         `<p class="error">Error loading data: ${results.errors[0].message}</p>`;
+      document.getElementById("last-updated").textContent = "Failed to load";
       return;
     }
     render(results.data);
@@ -307,10 +452,9 @@ Papa.parse(sheetURL, {
   error: function(err) {
     document.getElementById("main-wrap").innerHTML =
       `<p class="error">Error loading data: ${err.message}</p>`;
+    document.getElementById("last-updated").textContent = "Failed to load";
   }
 });
 </script>
 </body>
 </html>
-HTMLEOF
-echo "Done"

@@ -398,32 +398,43 @@ function render(data) {
       </thead>
       <tbody>`;
 
-provinces.forEach(prov => {
-  ...
-  rows.forEach((row, idx) => { ... });
+  provinces.forEach(prov => {
+    const rows = provMap[prov];
+    const status = (rows[0]["Model Status"] || "NO ACTIVATION").trim();
+    const span = rows.length;
 
-  html += `</tbody></table>`;                    // ⚠ now runs once per province, not once total
+    rows.forEach((row, idx) => {
+      html += `<tr>`;
+      if (idx === 0) {
+        html += `<td class="province-cell" rowspan="${span}">${prov}</td>`;
+        html += `<td class="status-cell" rowspan="${span}">
+                   <span class="badge ${badgeClass(status)}">${status}</span>
+                 </td>`;
+      }
+      const consortium = (row["Consortium"] || row["Label"] || row["CP Label"] || row["Type"] || "").trim();
+      const aa = (row["CP Allocation AA"] || "0").trim();
+      const er = (row["CP Allocation ER"] || "0").trim();
+      html += `<td class="consortium-cell">${consortium}</td>`;
+      html += `<td class="num-cell">${aa}</td>`;
+      html += `<td class="num-cell">${er}</td>`;
+      html += `</tr>`;
+    });
+  });
+
+  html += `</tbody></table>`;
   document.getElementById("main-wrap").innerHTML = html;
 
-  const riskOrder = ["Very High", "High", "Moderate"];   // ⚠ declared *inside* the loop
-  const riskAmounts = {};
-  data.forEach(row => { ... });
-});
-
   /* ── RIGHT TABLE: Risk Pool ── */
-const riskOrder = ["Very High", "High", "Moderate"];
-const riskAmounts = {};
-data.forEach(row => {
-  const v = (row["Risk Pool (Total) Allocation"] || "").trim();
-  if (!v) return;
-  let matchedLevel = null;
-  if (v.includes("Very High")) matchedLevel = "Very High";
-  else if (v.includes("High")) matchedLevel = "High";
-  else if (v.includes("Moderate")) matchedLevel = "Moderate";
-  if (matchedLevel && riskAmounts[matchedLevel] === undefined) {
-    riskAmounts[matchedLevel] = v.replace(matchedLevel, "").trim();
-  }
-});
+  const riskOrder = ["Very High", "High", "Moderate"];
+  const riskAmounts = {};
+
+  data.forEach(row => {
+    const v = (row["Risk Pool (Total) Allocation"] || "").trim();
+    riskOrder.forEach(lv => {
+      if (v.includes(lv) && riskAmounts[lv] === undefined) {
+        riskAmounts[lv] = v.replace(lv, "").trim();
+      }
+    });
   });
 
   const poolNameRow = data.find(r => r["Risk Pool"] || r["Pool Name"] || r["Risk Pool Name"]);

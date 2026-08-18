@@ -425,16 +425,19 @@ function render(data) {
   document.getElementById("main-wrap").innerHTML = html;
 
   /* ── RIGHT TABLE: Risk Pool ── */
-  const riskOrder = ["Very High", "High", "Moderate"];
-  const riskAmounts = {};
-
-  data.forEach(row => {
-    const v = (row["Risk Pool (Total) Allocation"] || "").trim();
-    riskOrder.forEach(lv => {
-      if (v.includes(lv) && riskAmounts[lv] === undefined) {
-        riskAmounts[lv] = v.replace(lv, "").trim();
-      }
-    });
+const riskOrder = ["Very High", "High", "Moderate"];
+const riskAmounts = {};
+data.forEach(row => {
+  const v = (row["Risk Pool (Total) Allocation"] || "").trim();
+  if (!v) return;
+  let matchedLevel = null;
+  if (v.includes("Very High")) matchedLevel = "Very High";
+  else if (v.includes("High")) matchedLevel = "High";
+  else if (v.includes("Moderate")) matchedLevel = "Moderate";
+  if (matchedLevel && riskAmounts[matchedLevel] === undefined) {
+    riskAmounts[matchedLevel] = v.replace(matchedLevel, "").trim();
+  }
+});
   });
 
   const poolNameRow = data.find(r => r["Risk Pool"] || r["Pool Name"] || r["Risk Pool Name"]);
